@@ -42,8 +42,10 @@ android {
         versionName getVersionName()
         minSdkVersion 16
         targetSdkVersion 29
+        multiDexEnabled true
     }
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -128,6 +130,7 @@ dependencies {
     androidTestImplementation "tools.fastlane:screengrab:1.2.0"
     implementation 'androidx.localbroadcastmanager:localbroadcastmanager:1.0.0'
     implementation 'com.android.volley:volley:1.1.1'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.10'
 }
 
 // Map for the version code that gives each ABI a value.

@@ -16,9 +16,10 @@ android {
         versionCode 16121000
         versionName '16.1.2-BETA-1-tor-0.4.2-5-rc-orbotservice'
         archivesBaseName = "OrbotService-$versionName"
-
+        multiDexEnabled true
     }
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
@@ -60,4 +61,5 @@ dependencies {
     implementation 'com.offbynull.portmapper:portmapper:2.0.5'
 
     implementation 'org.briarproject:jtorctl:0.3'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.0.10'
 }
