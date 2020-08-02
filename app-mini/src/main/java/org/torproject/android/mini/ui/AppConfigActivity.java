@@ -1,33 +1,30 @@
 package org.torproject.android.mini.ui;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.widget.CompoundButton;
 import android.widget.Switch;
-import org.torproject.android.mini.R;
-import org.torproject.android.service.OrbotConstants;
-import org.torproject.android.service.util.Prefs;
-import org.torproject.android.service.vpn.TorifiedApp;
 
-import static org.torproject.android.mini.MiniMainActivity.getApp;
-import static org.torproject.android.service.vpn.VpnPrefs.PREFS_KEY_TORIFIED;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
+import org.torproject.android.mini.R;
+import org.torproject.android.service.vpn.VpnPreferences;
 
 public class AppConfigActivity extends AppCompatActivity {
 
-    TorifiedApp mApp;
+    VpnPreferences.AppInformation mApp;
 
     private boolean mAppTor = false;
     private boolean mAppData = false;
     private boolean mAppWifi = false;
 
-    private SharedPreferences mPrefs;
+    private VpnPreferences vpnPreferences;
+    private PackageManager packageManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,31 +35,23 @@ public class AppConfigActivity extends AppCompatActivity {
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        final String pkgId = getIntent().getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+        vpnPreferences = new VpnPreferences(getApplicationContext());
+        packageManager = getPackageManager();
 
-        mPrefs =  Prefs.getSharedPrefs(getApplicationContext());
+        final String appName = getIntent().getStringExtra(Intent.EXTRA_PACKAGE_NAME);
 
-        ApplicationInfo aInfo = null;
-        try {
-            aInfo = getPackageManager().getApplicationInfo(pkgId, 0);
-            mApp = getApp(this, aInfo);
 
-            getSupportActionBar().setIcon(mApp.getIcon());
-
-            setTitle(mApp.getName());
-        }
-        catch (Exception e){}
-
-        mAppTor = mPrefs.getBoolean(pkgId + OrbotConstants.APP_TOR_KEY,true);
-        mAppData = mPrefs.getBoolean(pkgId + OrbotConstants.APP_DATA_KEY,false);
-        mAppWifi = mPrefs.getBoolean(pkgId + OrbotConstants.APP_WIFI_KEY,false);
+        mApp = vpnPreferences.getApp(appName);
+        getSupportActionBar().setIcon(packageManager.getApplicationIcon(mApp.applicationInfo));
+        setTitle(mApp.name);
 
         Switch switchAppTor = findViewById(R.id.switch_app_tor);
         switchAppTor.setChecked(mAppTor);
         switchAppTor.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mPrefs.edit().putBoolean(pkgId + OrbotConstants.APP_TOR_KEY,isChecked).commit();
+                mApp.vpnSettings.routeThroughTor = isChecked;
+                vpnPreferences.saveSettings();
 
                 Intent response = new Intent();
                 setResult(RESULT_OK,response);
@@ -70,67 +59,12 @@ public class AppConfigActivity extends AppCompatActivity {
         });
 
         Switch switchAppData = findViewById(R.id.switch_app_data);
-        switchAppData.setChecked(mAppData);
-        switchAppData.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mPrefs.edit().putBoolean(pkgId + OrbotConstants.APP_DATA_KEY,isChecked).commit();
-
-                Intent response = new Intent();
-                setResult(RESULT_OK,response);
-            }
-        });
         switchAppData.setEnabled(false);
 
         Switch switchAppWifi = findViewById(R.id.switch_app_wifi);
-        switchAppWifi.setChecked(mAppWifi);
-        switchAppWifi.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mPrefs.edit().putBoolean(pkgId + OrbotConstants.APP_WIFI_KEY,isChecked).commit();
-
-                Intent response = new Intent();
-                setResult(RESULT_OK,response);
-            }
-        });
         switchAppWifi.setEnabled(false);
 
 
-
-    }
-
-    private void addApp ()
-    {
-        mApp.setTorified(true);
-
-        String tordAppString = mPrefs.getString(PREFS_KEY_TORIFIED, "");
-
-        tordAppString = tordAppString += mApp.getPackageName()+"|";
-
-        SharedPreferences.Editor edit = mPrefs.edit();
-        edit.putString(PREFS_KEY_TORIFIED, tordAppString);
-        edit.commit();
-
-        Intent response = new Intent();
-        setResult(RESULT_OK,response);
-
-    }
-
-    private void removeApp ()
-    {
-        mApp.setTorified(false);
-
-
-        String tordAppString = mPrefs.getString(PREFS_KEY_TORIFIED, "");
-
-        tordAppString = tordAppString.replace(mApp.getPackageName()+"|","");
-
-        SharedPreferences.Editor edit = mPrefs.edit();
-        edit.putString(PREFS_KEY_TORIFIED, tordAppString);
-        edit.commit();
-
-        Intent response = new Intent();
-        setResult(RESULT_OK,response);
 
     }
 
@@ -154,7 +88,6 @@ public class AppConfigActivity extends AppCompatActivity {
             return true;
         }
         else if (item.getItemId() == R.id.menu_remove_app) {
-            removeApp();
             finish();
         }
 

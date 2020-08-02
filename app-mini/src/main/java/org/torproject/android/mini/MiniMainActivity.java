@@ -39,16 +39,18 @@ import android.view.animation.AccelerateInterpolator;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
+
 import org.json.JSONArray;
 import org.torproject.android.mini.settings.Languages;
 import org.torproject.android.mini.settings.LocaleHelper;
@@ -61,7 +63,6 @@ import org.torproject.android.service.OrbotConstants;
 import org.torproject.android.service.OrbotService;
 import org.torproject.android.service.TorServiceConstants;
 import org.torproject.android.service.util.Prefs;
-import org.torproject.android.service.vpn.TorifiedApp;
 import org.torproject.android.service.vpn.VpnConstants;
 import org.torproject.android.service.vpn.VpnPrefs;
 
@@ -1059,20 +1060,8 @@ public class MiniMainActivity extends AppCompatActivity
                 ApplicationInfo aInfo = null;
                 try {
                     aInfo = getPackageManager().getApplicationInfo(pkgId, 0);
-                    TorifiedApp app = getApp(MiniMainActivity.this, aInfo);
+                    avh.tv.setText("ignore");
 
-                    avh.tv.setText(app.getName());
-                    avh.iv.setImageDrawable(app.getIcon());
-
-                    Palette.generateAsync(drawableToBitmap(app.getIcon()), new Palette.PaletteAsyncListener() {
-                        public void onGenerated(Palette palette) {
-                            // Do something with colors...
-
-                            int color = palette.getVibrantColor(0x000000);
-                            avh.parent.setBackgroundColor(color);
-
-                        }
-                    });
 
                     avh.iv.setVisibility(View.VISIBLE);
 
@@ -1104,41 +1093,6 @@ public class MiniMainActivity extends AppCompatActivity
         }
 
 
-    }
-
-    public static TorifiedApp getApp (Context context, ApplicationInfo aInfo)
-    {
-        TorifiedApp app = new TorifiedApp();
-
-        PackageManager pMgr = context.getPackageManager();
-
-
-        try
-        {
-            app.setName(pMgr.getApplicationLabel(aInfo).toString());
-        }
-        catch (Exception e)
-        {
-            return null;
-        }
-
-
-        app.setEnabled(aInfo.enabled);
-        app.setUid(aInfo.uid);
-        app.setUsername(pMgr.getNameForUid(app.getUid()));
-        app.setProcname(aInfo.processName);
-        app.setPackageName(aInfo.packageName);
-
-        app.setTorified(true);
-
-        try {
-            app.setIcon(pMgr.getApplicationIcon(app.getPackageName()));
-
-
-        } catch (NameNotFoundException e) {
-            e.printStackTrace();
-        }
-        return app;
     }
 
 
