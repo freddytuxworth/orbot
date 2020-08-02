@@ -49,6 +49,7 @@ import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -327,28 +328,20 @@ public class OrbotVpnManager implements Handler.Callback {
     
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	private void doLollipopAppRouting (VpnService.Builder builder) throws NameNotFoundException {
-		SharedPreferences prefs = VpnUtils.getSharedPrefs(mService.getApplicationContext());
-        ArrayList<TorifiedApp> apps = TorifiedApp.getApps(mService, prefs);
+		VpnPreferences vpnPreferences = new VpnPreferences(mService);
+		long appsRoutedThroughTor = vpnPreferences.getApps().stream()
+				.filter(appInformation -> appInformation.vpnSettings.routeThroughTor)
+				.peek(appInformation -> {
+					try {
+						builder.addAllowedApplication(appInformation.applicationInfo.packageName);
+					} catch (NameNotFoundException e) {
+						e.printStackTrace();
+					}
+				})
+				.count();
 
-
-		boolean perAppEnabled = false;
-        
-        for (TorifiedApp app : apps)
-        {
-        	if (app.isTorified() && (!app.getPackageName().equals(mService.getPackageName())))
-        	{
-				if (prefs.getBoolean(app.getPackageName() + OrbotConstants.APP_TOR_KEY,true)) {
-
-					builder.addAllowedApplication(app.getPackageName());
-
-				}
-
-				perAppEnabled = true;
-
-			}
-        }
-    
-        if (!perAppEnabled)
+		// if no apps are specified, all apps will be routed through tor
+        if (appsRoutedThroughTor == 0)
         	builder.addDisallowedApplication(mService.getPackageName());
     
     }
